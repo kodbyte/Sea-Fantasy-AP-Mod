@@ -3,13 +3,12 @@ using BepInEx.Logging;
 using CodeStage.AntiCheat.ObscuredTypes;
 using HarmonyLib;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-using JetBrains.Annotations;
-using Archipelago.MultiClient.Net.Enums;
+using UnityEngine.UI;
 
 [BepInPlugin("com.kodbyte.seafantasyap", "Sea Fantasy AP", "0.0.1")]
 public class SeaFantasyAP : BaseUnityPlugin
@@ -18,6 +17,7 @@ public class SeaFantasyAP : BaseUnityPlugin
     public static UIManager UIManagerInstance;
     public static MainPlayerController PlayerControllerInstance;
     public static bool IsFishingActive = false;
+    public static bool IsOpeningChest = false;
 
     private static string configPath = Path.Combine(
         Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location),
@@ -105,6 +105,21 @@ public class MainPlayerControllerInitPatch
     }
 }
 
+[HarmonyPatch(typeof(TitleWindow), "PUB_Init")]
+public class TitleWindowInitPatch
+{
+    static void Postfix(TitleWindow __instance)
+    {
+        var verText = AccessTools.Field(typeof(TitleWindow), "m_VerText").GetValue(__instance) as UnityEngine.UI.Text;
+        if (verText == null) return;
+
+        if (ArchipelagoClient.Connected)
+            verText.text += $" | <color=green>AP: Connected</color>";
+        else
+            verText.text += " | <color=red>AP: Not Connected</color>";
+    }
+}
+
 [HarmonyPatch(typeof(UIManager), "PUB_CatchState")]
 public class CatchStatePatch
 {
@@ -178,6 +193,13 @@ public class ChestOpenPatch
 
         long locationId = 20000 + Convert.ToInt64(mID);
         ArchipelagoClient.SendLocation(locationId);
+
+        SeaFantasyAP.IsOpeningChest = true;
+    }
+    
+    static void Postfix()
+    {
+        SeaFantasyAP.IsOpeningChest = false;
     }
 }
 
@@ -191,6 +213,7 @@ public class AddRodPatch
 
         if (ItemHandler.IsGrantingItem) return true;
         if (!ArchipelagoClient.Connected) return true;
+        if (SeaFantasyAP.IsOpeningChest) return false;
 
         if (LocationRodIds.Contains(id))
         {
@@ -205,9 +228,11 @@ public class AddRodPatch
 [HarmonyPatch(typeof(UIManager), "PUB_AddBite")]
 public class AddBitePatch
 {
-    static void Prefix(int id, int num)
+    static bool Prefix(int id, int num)
     {
+        if (SeaFantasyAP.IsOpeningChest) return false;
         SeaFantasyAP.Log.LogInfo($"AddBite: bite_type={id} | num={num}");
+        return true;
     }
 }
 
@@ -221,6 +246,7 @@ public class AddDressPatch
 
         if (ItemHandler.IsGrantingItem) return true;
         if (!ArchipelagoClient.Connected) return true;
+        if (SeaFantasyAP.IsOpeningChest) return false;
 
         if (LocationOutfitIds.Contains(id))
         {
@@ -236,28 +262,34 @@ public class AddDressPatch
 [HarmonyPatch(typeof(UIManager), "PUB_AddPotion")]
 public class AddPotionPatch
 {
-    static void Prefix(int id, int num)
+    static bool Prefix(int id, int num)
     {
+        if (SeaFantasyAP.IsOpeningChest) return false;
         SeaFantasyAP.Log.LogInfo($"AddPotion: potion_type={id} | num={num}");
+        return true;
     }
 }
 
 [HarmonyPatch(typeof(UIManager), "PUB_SendGold")]
 public class SendGoldPatch
 {
-    static void Prefix(ObscuredInt add_gold)
+    static bool Prefix(ObscuredInt add_gold)
     {
+        if (SeaFantasyAP.IsOpeningChest) return false;
         SeaFantasyAP.Log.LogInfo($"SendGold: num={add_gold}");
+        return true;
     }
 }
 
 [HarmonyPatch(typeof(UIManager), "PUB_AddCharm")]
 public class AddCharmPatch
 {
-    static void Prefix(ST_GET_CHARM_DATA data)
+    static bool Prefix(ST_GET_CHARM_DATA data)
     {
+        if (SeaFantasyAP.IsOpeningChest) return false;
         SeaFantasyAP.Log.LogInfo($"AddCharm: rare={data.rare} | hp={data.hp} | atk={data.atk}");
         SeaFantasyAP.Log.LogInfo($"vit={data.vit} | tec={data.tec} | eye={data.eye} | luc={data.luc}");
+        return true;
     }
 }
 
@@ -271,6 +303,7 @@ public class AddItemPatch
 
         if (ItemHandler.IsGrantingItem) return true;
         if (!ArchipelagoClient.Connected) return true;
+        if (SeaFantasyAP.IsOpeningChest) return false;
 
         if (LocationSpIds.Contains(id))
         {
