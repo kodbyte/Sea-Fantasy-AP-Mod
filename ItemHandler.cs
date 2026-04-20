@@ -16,46 +16,46 @@
         try
         {
             // Rod
-            if (itemId >= 10000 && itemId < 20000)
+            if (itemId >= SeaFantasyAP.ITEM_ROD && itemId < SeaFantasyAP.ITEM_BAIT)
             {
-                int rodId = (int)(itemId - 10000);
+                int rodId = (int)(itemId - SeaFantasyAP.ITEM_ROD);
                 SeaFantasyAP.Log.LogInfo($"Granting Rod: id={rodId} | itemId={itemId}");
                 UIManager.PUB_AddRod(rodId, 1);
             }
             // Bait
-            else if (itemId >= 20000 && itemId < 30000)
+            else if (itemId >= SeaFantasyAP.ITEM_BAIT && itemId < SeaFantasyAP.ITEM_OUTFIT)
             {
-                int baitId = (int)(itemId - 20000);
+                int baitId = (int)(itemId - SeaFantasyAP.ITEM_BAIT);
                 UIManager.PUB_AddBite(baitId, 1);
             }
             // Outfit
-            else if (itemId >= 30000 && itemId < 40000)
+            else if (itemId >= SeaFantasyAP.ITEM_OUTFIT && itemId < SeaFantasyAP.ITEM_POTION)
             {
-                int outfitId = (int)(itemId - 30000);
+                int outfitId = (int)(itemId - SeaFantasyAP.ITEM_OUTFIT);
                 UIManager.PUB_AddDress(outfitId);
             }
             // Potion
-            else if (itemId >= 40000 && itemId < 50000)
+            else if (itemId >= SeaFantasyAP.ITEM_POTION && itemId < SeaFantasyAP.ITEM_SPECIAL)
             {
-                int potionId = (int)(itemId - 40000);
+                int potionId = (int)(itemId - SeaFantasyAP.ITEM_POTION);
                 UIManager.PUB_AddPotion(potionId, 1);
             }
             // SP Item
-            else if (itemId >= 50000 && itemId < 60000)
+            else if (itemId >= SeaFantasyAP.ITEM_SPECIAL && itemId < SeaFantasyAP.ITEM_GOLD)
             {
-                int spId = (int)(itemId - 50000);
+                int spId = (int)(itemId - SeaFantasyAP.ITEM_SPECIAL);
                 SeaFantasyAP.Log.LogInfo($"Granting SP Item: id={spId} | itemId={itemId}");
                 UIManager.PUB_AddItem(spId);
 
                 // when boat is received, add ship manual and set ship key
-                if (spId == 09)
+                if (spId == 9)
                 {
                     UIManager.PUB_AddItem(8);
                     SeaFantasyAP.PlayerControllerInstance?.PUB_SetShipKey(1);
                 }
             }
             // Gold
-            else if (itemId >= 90000 && itemId < 100000)
+            else if (itemId >= SeaFantasyAP.ITEM_GOLD && itemId < 100000)
             {
                 int amount;
                 switch (itemId)
